@@ -10,7 +10,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || '*', // Allow specific frontend URL or all
+  origin: process.env.FRONTEND_URL || '*', // In production, set FRONTEND_URL to your deployed frontend address
+  credentials: true, // Allow cookies/headers if needed
   optionsSuccessStatus: 200
 };
 
