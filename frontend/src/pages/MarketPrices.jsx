@@ -33,7 +33,8 @@ const MarketPrices = () => {
   ];
 
   useEffect(() => {
-    fetch('/api/prices/current')
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    fetch(`${apiUrl}/api/prices/current`)
       .then(res => res.json())
       .then(data => {
         if (data.prices && data.insights) {

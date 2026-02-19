@@ -9,7 +9,8 @@ const FertilizerAdvisory = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch('/api/fertilizers/crops-list')
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    fetch(`${apiUrl}/api/fertilizers/crops-list`)
       .then(res => res.json())
       .then(data => setCropsList(data))
       .catch(err => console.error('Error fetching crops list:', err));
@@ -18,7 +19,8 @@ const FertilizerAdvisory = () => {
   const handleGetFertilizers = () => {
     if (selectedCrop) {
       setLoading(true);
-      fetch(`/api/fertilizers/recommendations/${selectedCrop}`)
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      fetch(`${apiUrl}/api/fertilizers/recommendations/${selectedCrop}`)
         .then(res => res.json())
         .then(data => {
           setFertilizers(data);

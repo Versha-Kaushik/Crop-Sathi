@@ -26,7 +26,8 @@ const Dashboard = () => {
 
   const fetchCrops = () => {
     setLoading(true);
-    fetch('/api/dashboard/farmer-crops', {
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    fetch(`${apiUrl}/api/dashboard/farmer-crops`, {
       headers: {
         'x-user-id': userId
       }
@@ -65,7 +66,8 @@ const Dashboard = () => {
     const payload = { ...newCropData, plantedDate: today };
 
     try {
-      const response = await fetch('/api/dashboard/farmer-crops', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${apiUrl}/api/dashboard/farmer-crops`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,10 +94,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (selectedCrop) {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
       Promise.all([
-        fetch(`/api/dashboard/stages/${selectedCrop.name}`).then(res => res.json()),
-        fetch(`/api/dashboard/schedules/${selectedCrop.name}`).then(res => res.json()),
-        fetch(`/api/dashboard/pest-management/${selectedCrop.name}`).then(res => res.json())
+        fetch(`${apiUrl}/api/dashboard/stages/${selectedCrop.name}`).then(res => res.json()),
+        fetch(`${apiUrl}/api/dashboard/schedules/${selectedCrop.name}`).then(res => res.json()),
+        fetch(`${apiUrl}/api/dashboard/pest-management/${selectedCrop.name}`).then(res => res.json())
       ])
         .then(([stages, schedules, pest]) => {
           setCurrentStages(stages || []);

@@ -11,14 +11,15 @@ const WeatherAlerts = () => {
   useEffect(() => {
     const fetchWeather = (lat = null, lon = null, name = 'Your Location') => {
       setLoading(true);
-      let url = '/api/weather/forecast';
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      let url = `${apiUrl}/api/weather/forecast`;
       if (lat && lon) {
         url += `?lat=${lat}&lon=${lon}`;
       }
 
       const alertsUrl = (lat && lon)
-        ? `/api/weather/alerts?lat=${lat}&lon=${lon}`
-        : '/api/weather/alerts';
+        ? `${apiUrl}/api/weather/alerts?lat=${lat}&lon=${lon}`
+        : `${apiUrl}/api/weather/alerts`;
 
       Promise.all([
         fetch(url).then(res => res.json()),
@@ -60,7 +61,9 @@ const WeatherAlerts = () => {
     console.log('Searching for:', searchQuery);
     setLoading(true);
 
-    fetch(`/api/weather/geocode?city=${searchQuery}`)
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const geocodeUrl = `${apiUrl}/api/weather/geocode?city=${searchQuery}`;
+    fetch(geocodeUrl)
       .then(res => {
         if (!res.ok) throw new Error('City not found');
         return res.json();
@@ -68,8 +71,8 @@ const WeatherAlerts = () => {
       .then(data => {
         console.log('Geocode result:', data);
 
-        const forecastUrl = `/api/weather/forecast?lat=${data.latitude}&lon=${data.longitude}`;
-        const alertsUrl = `/api/weather/alerts?lat=${data.latitude}&lon=${data.longitude}`;
+        const forecastUrl = `${apiUrl}/api/weather/forecast?lat=${data.latitude}&lon=${data.longitude}`;
+        const alertsUrl = `${apiUrl}/api/weather/alerts?lat=${data.latitude}&lon=${data.longitude}`;
         console.log('Fetching forecast from:', forecastUrl);
 
         Promise.all([

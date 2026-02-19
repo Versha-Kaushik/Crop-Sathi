@@ -11,7 +11,8 @@ const CropAdvisory = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch('/api/crops/meta')
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    fetch(`${apiUrl}/api/crops/meta`)
       .then(res => res.json())
       .then(data => {
         setSoilTypes(data.soilTypes);
@@ -23,7 +24,8 @@ const CropAdvisory = () => {
   const handleGetRecommendations = () => {
     if (selectedSoil && selectedWeather) {
       setLoading(true);
-      fetch(`/api/crops/recommendations?soil=${selectedSoil}&weather=${selectedWeather}`)
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      fetch(`${apiUrl}/api/crops/recommendations?soil=${selectedSoil}&weather=${selectedWeather}`)
         .then(res => res.json())
         .then(data => {
           setRecommendations(data);
