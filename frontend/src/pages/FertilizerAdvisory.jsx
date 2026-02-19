@@ -4,7 +4,7 @@ import './FertilizerAdvisory.css';
 const FertilizerAdvisory = () => {
   const [cropsList, setCropsList] = useState([]);
   const [selectedCrop, setSelectedCrop] = useState('');
-  const [fertilizers, setFertilizers] = useState([]);
+  const [fertilizers, setFertilizers] = useState(null);
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -119,70 +119,110 @@ const FertilizerAdvisory = () => {
           </div>
         </div>
 
-        {showResults && (
+        {showResults && fertilizers && (
           <div className="results-section">
             <h2 className="section-title">Fertilizer Recommendations for {selectedCrop}</h2>
 
-            {fertilizers.length > 0 ? (
-              <div className="fertilizers-grid">
-                {fertilizers.map((fertilizer) => (
-                  <div key={fertilizer.id} className="fertilizer-card">
-                    <div className="fertilizer-header">
-                      <div className="fertilizer-icon">
-                        {getFertilizerIcon(fertilizer.type)}
-                      </div>
-                      <div className="fertilizer-title">
-                        <h3 className="fertilizer-name">{fertilizer.name}</h3>
-                        <span className="fertilizer-type">{fertilizer.type}</span>
-                      </div>
-                    </div>
-
-                    <div className="fertilizer-details">
-                      <div className="detail-row">
-                        <div className="detail-item">
-                          <span className="detail-icon">📋</span>
-                          <div>
-                            <span className="detail-label">Application Method:</span>
-                            <span className="detail-value">{fertilizer.application}</span>
-                          </div>
+            {/* Basal Application Section */}
+            {fertilizers.basal && fertilizers.basal.length > 0 && (
+              <div className="fertilizer-category">
+                <h3 className="category-title">🌱 Basal Application (At Sowing/Planting)</h3>
+                <div className="fertilizers-grid">
+                  {fertilizers.basal.map((item, index) => (
+                    <div key={`basal-${index}`} className="fertilizer-card">
+                      <div className="fertilizer-header">
+                        <div className="fertilizer-icon">⏱️</div>
+                        <div className="fertilizer-title">
+                          <h3 className="fertilizer-name">{item.name}</h3>
+                          <span className="fertilizer-type">Basal</span>
                         </div>
                       </div>
-
-                      <div className="detail-row">
-                        <div className="detail-item">
-                          <span className="detail-icon">⚖️</span>
-                          <div>
-                            <span className="detail-label">Quantity:</span>
-                            <span className="detail-value">{fertilizer.quantity}</span>
+                      <div className="fertilizer-details">
+                        <div className="detail-row">
+                          <div className="detail-item">
+                            <span className="detail-icon">⚖️</span>
+                            <div>
+                              <span className="detail-label">Quantity:</span>
+                              <span className="detail-value">{item.quantity}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-
-                      <div className="detail-row">
-                        <div className="detail-item">
-                          <span className="detail-icon">📅</span>
-                          <div>
-                            <span className="detail-label">Timing:</span>
-                            <span className="detail-value">{fertilizer.timing}</span>
+                        <div className="detail-row">
+                          <div className="detail-item">
+                            <span className="detail-icon">📅</span>
+                            <div>
+                              <span className="detail-label">Timing:</span>
+                              <span className="detail-value">{item.timing}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-
-                    <div className="fertilizer-benefits">
-                      <h4 className="benefits-title">💪 Key Benefits:</h4>
-                      <p className="benefits-text">{fertilizer.benefits}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            ) : (
+            )}
+
+            {/* Top Dressing Section */}
+            {fertilizers.topDressing && fertilizers.topDressing.length > 0 && (
+              <div className="fertilizer-category">
+                <h3 className="category-title">🌿 Top Dressing (Later Stages)</h3>
+                <div className="fertilizers-grid">
+                  {fertilizers.topDressing.map((item, index) => (
+                    <div key={`top-${index}`} className="fertilizer-card">
+                      <div className="fertilizer-header">
+                        <div className="fertilizer-icon">🆙</div>
+                        <div className="fertilizer-title">
+                          <h3 className="fertilizer-name">{item.name}</h3>
+                          <span className="fertilizer-type">Top Dressing</span>
+                        </div>
+                      </div>
+                      <div className="fertilizer-details">
+                        <div className="detail-row">
+                          <div className="detail-item">
+                            <span className="detail-icon">⚖️</span>
+                            <div>
+                              <span className="detail-label">Quantity:</span>
+                              <span className="detail-value">{item.quantity}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="detail-row">
+                          <div className="detail-item">
+                            <span className="detail-icon">📅</span>
+                            <div>
+                              <span className="detail-label">Timing:</span>
+                              <span className="detail-value">{item.timing}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tips Section */}
+            {fertilizers.tips && fertilizers.tips.length > 0 && (
+              <div className="fertilizer-category">
+                <h3 className="category-title">💡 Important Tips</h3>
+                <div className="tips-list">
+                  <ul>
+                    {fertilizers.tips.map((tip, index) => (
+                      <li key={`tip-${index}`}>{tip}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {(!fertilizers.basal && !fertilizers.topDressing) && (
               <div className="no-results">
                 <div className="no-results-icon">🧪</div>
                 <h3>No fertilizer recommendations found</h3>
                 <p>
                   We don't have specific fertilizer recommendations for this crop yet.
-                  Please try selecting a different crop or contact our agricultural experts for personalized advice.
                 </p>
               </div>
             )}
