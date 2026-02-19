@@ -1,36 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
+const Crop = require('../models/Crop');
 const {
     cropStages,
     irrigationSchedule,
     fertilizerSchedule,
     pestManagement
 } = require('../data/dashboard');
-
-const USER_CROPS_FILE = path.join(__dirname, '../data/userCrops.json');
-
-const readUserCrops = () => {
-    try {
-        if (!fs.existsSync(USER_CROPS_FILE)) {
-            return [];
-        }
-        const data = fs.readFileSync(USER_CROPS_FILE, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error("Error reading user crops:", error);
-        return [];
-    }
-};
-
-const writeUserCrops = (data) => {
-    try {
-        fs.writeFileSync(USER_CROPS_FILE, JSON.stringify(data, null, 2));
-    } catch (error) {
-        console.error("Error writing user crops:", error);
-    }
-};
 
 const defaultStages = [
     {
@@ -93,7 +69,7 @@ const recalculateCropStatus = (crop) => {
     let currentStage = 'Planting';
     let accumulatedDays = 0;
     let nextAction = 'Monitor Crop';
-    let nextActionDate = new Date(Date.now() + 86400000).toISOString().split('T')[0]; // Default tomorrow
+    let nextActionDate = new Date(Date.now() + 86400000); // Default tomorrow
 
     for (const stage of stages) {
         accumulatedDays += parseInt(stage.duration);
@@ -101,7 +77,7 @@ const recalculateCropStatus = (crop) => {
             currentStage = stage.stage;
             if (stage.tasks && stage.tasks.length > 0) {
                 nextAction = stage.tasks[0];
-                nextActionDate = new Date(planted.getTime() + (accumulatedDays - parseInt(stage.duration) / 2) * 86400000).toISOString().split('T')[0];
+                nextActionDate = new Date(planted.getTime() + (accumulatedDays - parseInt(stage.duration) / 2) * 86400000);
             }
             break;
         }
@@ -114,7 +90,7 @@ const recalculateCropStatus = (crop) => {
     }
 
     return {
-        ...crop,
+        ...crop.toObject(),
         currentStage,
         progress,
         nextAction,
@@ -122,75 +98,64 @@ const recalculateCropStatus = (crop) => {
     };
 };
 
-router.get('/farmer-crops', (req, res) => {
+router.get('/farmer-crops', async (req, res) => {
     const userId = req.headers['x-user-id'];
 
     if (!userId) return res.status(400).json({ message: 'User ID is required' });
 
-    const allUserCrops = readUserCrops();
-    const userRecord = allUserCrops.find(record => record.userId === userId);
-
-    if (!userRecord || !userRecord.crops) return res.json([]);
-
-    const updatedCrops = userRecord.crops.map(crop => recalculateCropStatus(crop));
-
-    res.json(updatedCrops);
+    try {
+        const crops = await Crop.find({ userId });
+        const updatedCrops = crops.map(crop => recalculateCropStatus(crop));
+        res.json(updatedCrops);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
 });
 
-router.post('/farmer-crops', (req, res) => {
+router.post('/farmer-crops', async (req, res) => {
     const userId = req.headers['x-user-id'];
     const { name, variety, plantedDate, area } = req.body;
 
     if (!userId || !name || !plantedDate) {
-        console.error("Missing required fields in POST /farmer-crops");
         return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    const allUserCrops = readUserCrops();
-    let userRecord = allUserCrops.find(record => record.userId === userId);
+    try {
+        const stages = cropStages[name] || defaultStages;
+        const totalDuration = stages.reduce((acc, stage) => acc + parseInt(stage.duration), 0);
 
-    if (!userRecord) {
-        userRecord = { userId, crops: [] };
-        allUserCrops.push(userRecord);
-    }
+        const planted = new Date(plantedDate);
+        const harvestDate = new Date(planted);
+        harvestDate.setDate(planted.getDate() + totalDuration);
 
-    const stages = cropStages[name] || defaultStages;
-    const totalDuration = stages.reduce((acc, stage) => acc + parseInt(stage.duration), 0);
-
-    const planted = new Date(plantedDate);
-    const harvestDate = new Date(planted);
-    harvestDate.setDate(planted.getDate() + totalDuration);
-
-    let newCrop = {
-        id: Date.now(),
-        name,
-        variety: variety || 'Standard',
-        plantedDate,
-        expectedHarvest: harvestDate.toISOString().split('T')[0],
-        area: area || '1 hectare',
-        currentStage: 'Planting',
-        progress: 0,
-        image: name.toLowerCase().includes('wheat')
+        const image = name.toLowerCase().includes('wheat')
             ? 'https://images.pexels.com/photos/326082/pexels-photo-326082.jpeg?auto=compress&cs=tinysrgb&w=400'
             : name.toLowerCase().includes('maize') || name.toLowerCase().includes('corn')
                 ? 'https://images.pexels.com/photos/547263/pexels-photo-547263.jpeg?auto=compress&cs=tinysrgb&w=400'
                 : name.toLowerCase().includes('rice') || name.toLowerCase().includes('paddy')
                     ? 'https://images.pexels.com/photos/4187621/pexels-photo-4187621.jpeg?auto=compress&cs=tinysrgb&w=400'
-                    : 'https://images.pexels.com/photos/2132250/pexels-photo-2132250.jpeg?auto=compress&cs=tinysrgb&w=400',
-        nextAction: 'Check Growth',
-        nextActionDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
-        healthStatus: 'Good',
-        expectedYield: 'Est. Standard Yield',
-        totalInvestment: '₹0',
-        expectedRevenue: '₹0'
-    };
+                    : 'https://images.pexels.com/photos/2132250/pexels-photo-2132250.jpeg?auto=compress&cs=tinysrgb&w=400';
 
-    newCrop = recalculateCropStatus(newCrop);
+        const crop = await Crop.create({
+            userId,
+            name,
+            variety: variety || 'Standard',
+            plantedDate,
+            expectedHarvest: harvestDate,
+            area: area || '1 hectare',
+            image,
+            nextAction: 'Check Growth',
+            nextActionDate: new Date(Date.now() + 86400000 * 2)
+        });
 
-    userRecord.crops.push(newCrop);
-    writeUserCrops(allUserCrops);
+        const updatedCrop = recalculateCropStatus(crop);
+        res.status(201).json(updatedCrop);
 
-    res.status(201).json(newCrop);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
 });
 
 router.get('/stages/:cropName', (req, res) => {
