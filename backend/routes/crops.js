@@ -20,12 +20,12 @@ router.get('/recommendations', (req, res) => {
 
     const soilData = cropRecommendations[soil];
     if (!soilData) {
-        return res.status(404).json({ message: 'Soil type not found' });
+        return res.json([]);
     }
 
     const recommendations = soilData[weather];
     if (!recommendations) {
-        return res.status(404).json({ message: 'Weather condition not found for this soil type' });
+        return res.json([]);
     }
 
     res.json(recommendations);
