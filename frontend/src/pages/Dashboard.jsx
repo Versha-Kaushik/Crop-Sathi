@@ -8,6 +8,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [cropOptions, setCropOptions] = useState([]);
 
   const [newCropData, setNewCropData] = useState({
     name: 'Wheat',
@@ -58,6 +59,18 @@ const Dashboard = () => {
       fetchCrops();
     }
   }, [userId]);
+
+  useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    fetch(`${apiUrl}/api/constants/crop-options`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setCropOptions(data);
+        }
+      })
+      .catch(err => console.error('Error fetching crop options:', err));
+  }, []);
 
   const handleAddCrop = async (e) => {
     e.preventDefault();
@@ -455,31 +468,9 @@ const Dashboard = () => {
                     required
                   />
                   <datalist id="crop-options">
-                    <option value="Wheat" />
-                    <option value="Maize" />
-                    <option value="Rice (Paddy)" />
-                    <option value="Cotton" />
-                    <option value="Sugarcane" />
-                    <option value="Bajra (Pearl Millet)" />
-                    <option value="Jowar (Sorghum)" />
-                    <option value="Ragi (Finger Millet)" />
-                    <option value="Barley" />
-                    <option value="Soybean" />
-                    <option value="Groundnut" />
-                    <option value="Mustard" />
-                    <option value="Sunflower" />
-                    <option value="Bengal Gram (Chickpea)" />
-                    <option value="Red Gram (Arhar/Tur)" />
-                    <option value="Green Gram (Moong)" />
-                    <option value="Black Gram (Urad)" />
-                    <option value="Potato" />
-                    <option value="Onion" />
-                    <option value="Tomato" />
-                    <option value="Jute" />
-                    <option value="Tea" />
-                    <option value="Coffee" />
-                    <option value="Mustard" />
-                    <option value="Buckwheat" />
+                    {cropOptions.map((option, index) => (
+                      <option key={index} value={option} />
+                    ))}
                   </datalist>
                 </div>
                 <div className="form-group">

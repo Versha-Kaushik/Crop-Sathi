@@ -23,6 +23,7 @@ app.use('/api/fertilizers', fertilizerRoute);
 app.use('/api/weather', weatherRoute);
 app.use('/api/prices', pricesRoute);
 app.use('/api/auth', authRoute);
+app.use('/api/constants', require('./routes/constants'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Crop Sathi API' });

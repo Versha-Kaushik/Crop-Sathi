@@ -9,44 +9,35 @@ const MarketPrices = () => {
   const [sortBy, setSortBy] = useState('price-high');
   const [loading, setLoading] = useState(true);
 
-  const INDIAN_STATES = [
-    'All',
-    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
-    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
-    'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
-    'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
-    'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
-    'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
-    'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli',
-    'Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
-  ];
-
-  const INDIAN_CROPS = [
-    'All',
-    'Wheat', 'Rice', 'Maize', 'Barley', 'Bajra', 'Jowar', // Cereals
-    'Bengal Gram', 'Red Gram', 'Green Gram', 'Black Gram', 'Lentil', // Pulses
-    'Groundnut', 'Mustard', 'Soybean', 'Sunflower', 'Sesame', // Oilseeds
-    'Sugarcane', 'Cotton', 'Jute', 'Tobacco', // Cash Crops
-    'Onion', 'Potato', 'Tomato', 'Brinjal', 'Cauliflower', 'Cabbage', // Vegetables
-    'Mango', 'Banana', 'Apple', 'Grapes', 'Pomegranate', 'Papaya', // Fruits
-    'Turmeric', 'Chilli', 'Coriander', 'Cumin', 'Garlic', 'Ginger' // Spices
-  ];
+  const [indianStates, setIndianStates] = useState(['All']);
+  const [indianCrops, setIndianCrops] = useState(['All']);
 
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || '';
-    fetch(`${apiUrl}/api/prices/current`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.prices && data.insights) {
-          setMarketPrices(data.prices);
-          setMarketInsights(data.insights);
+
+    // Fetch initial data
+    Promise.all([
+      fetch(`${apiUrl}/api/prices/current`).then(res => res.json()),
+      fetch(`${apiUrl}/api/constants/states`).then(res => res.json()),
+      fetch(`${apiUrl}/api/constants/crops`).then(res => res.json())
+    ])
+      .then(([pricesData, statesData, cropsData]) => {
+        // Handle prices data
+        if (pricesData.prices && pricesData.insights) {
+          setMarketPrices(pricesData.prices);
+          setMarketInsights(pricesData.insights);
         } else {
-          setMarketPrices(Array.isArray(data) ? data : []);
+          setMarketPrices(Array.isArray(pricesData) ? pricesData : []);
         }
+
+        // Handle constants data
+        if (Array.isArray(statesData)) setIndianStates(statesData);
+        if (Array.isArray(cropsData)) setIndianCrops(cropsData);
+
         setLoading(false);
       })
       .catch(err => {
-        console.error('Error fetching prices:', err);
+        console.error('Error fetching data:', err);
         setLoading(false);
       });
   }, []);
@@ -140,7 +131,7 @@ const MarketPrices = () => {
                 value={selectedState}
                 onChange={(e) => setSelectedState(e.target.value)}
               >
-                {INDIAN_STATES.map(state => (
+                {indianStates.map(state => (
                   <option key={state} value={state}>{state}</option>
                 ))}
               </select>
@@ -156,7 +147,7 @@ const MarketPrices = () => {
                 value={selectedCrop}
                 onChange={(e) => setSelectedCrop(e.target.value)}
               >
-                {INDIAN_CROPS.map(crop => (
+                {indianCrops.map(crop => (
                   <option key={crop} value={crop}>{crop}</option>
                 ))}
               </select>
